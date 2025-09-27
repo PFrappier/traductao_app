@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:traductao_app/model/vocabulary_entry.dart';
 import 'package:traductao_app/router/go_router.dart';
+import 'package:traductao_app/widgets/language_placeholder.dart';
 
 class LanguageCard extends StatefulWidget {
   final VocabularyEntry entry;
@@ -49,26 +50,35 @@ class _LanguageCardState extends State<LanguageCard> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
-                  Container(
-                    width: 40,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      image: DecorationImage(
-                        image: NetworkImage(_getFlagUrl(widget.entry.countryCode)),
-                        fit: BoxFit.cover,
-                        onError: (error, stackTrace) {},
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                  widget.entry.countryCode.isNotEmpty
+                      ? Container(
+                          width: 40,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            image: DecorationImage(
+                              image: NetworkImage(_getFlagUrl(widget.entry.countryCode)),
+                              fit: BoxFit.cover,
+                              onError: (error, stackTrace) {},
+                            ),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                              ),
+                            ),
+                          ),
+                        )
+                      : ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LanguagePlaceholder(
+                            width: 40,
+                            height: 24,
+                            languageName: widget.entry.language,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -189,23 +199,24 @@ class _LanguageCardState extends State<LanguageCard> {
             children: [
               SizedBox(
                 height: 120,
-                child: Image.network(
-                  _getFlagUrl(widget.entry.countryCode),
-                  width: widget.width,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: widget.width,
-                      height: 120,
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.flag,
-                        size: 40,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                child: widget.entry.countryCode.isNotEmpty
+                    ? Image.network(
+                        _getFlagUrl(widget.entry.countryCode),
+                        width: widget.width,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return LanguagePlaceholder(
+                            width: widget.width,
+                            height: 120,
+                            languageName: widget.entry.language,
+                          );
+                        },
+                      )
+                    : LanguagePlaceholder(
+                        width: widget.width,
+                        height: 120,
+                        languageName: widget.entry.language,
                       ),
-                    );
-                  },
-                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(12.0),

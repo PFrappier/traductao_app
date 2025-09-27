@@ -116,14 +116,14 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Aucune langue dans votre vocabulaire',
+                      'Aucune langue dans ton vocabulaire',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Appuyez sur + pour ajouter votre première langue',
+                      'Appuyez sur + pour ajouter ta première langue',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),

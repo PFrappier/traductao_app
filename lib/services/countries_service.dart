@@ -1,0 +1,99 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:traductao_app/model/country.dart';
+
+class CountriesService {
+  static const String _baseUrl = 'https://restcountries.com/v3.1';
+
+  static CountriesService? _instance;
+  List<Country>? _cachedCountries;
+
+  CountriesService._();
+
+  static CountriesService get instance {
+    _instance ??= CountriesService._();
+    return _instance!;
+  }
+
+  Future<List<Country>> getCountries() async {
+    // Retourner les données en cache si disponibles
+    if (_cachedCountries != null) {
+      return _cachedCountries!;
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$_baseUrl/all?fields=name,cca2,flag'),
+        headers: {'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+
+        _cachedCountries = jsonData
+            .map((countryJson) => Country.fromJson(countryJson))
+            .toList();
+
+        // Trier par nom pour une meilleure UX
+        _cachedCountries!.sort((a, b) => a.name.compareTo(b.name));
+
+        return _cachedCountries!;
+      } else {
+        throw Exception('Erreur lors du chargement des pays: ${response.statusCode}');
+      }
+    } catch (e) {
+      // En cas d'erreur, retourner une liste de pays par défaut
+      return _getDefaultCountries();
+    }
+  }
+
+  Country? findCountryByCode(String code) {
+    if (_cachedCountries == null) return null;
+
+    try {
+      return _cachedCountries!.firstWhere(
+        (country) => country.code.toLowerCase() == code.toLowerCase(),
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  List<Country> searchCountries(String query) {
+    if (_cachedCountries == null) return [];
+
+    if (query.isEmpty) return _cachedCountries!;
+
+    final lowercaseQuery = query.toLowerCase();
+    return _cachedCountries!
+        .where((country) =>
+          country.name.toLowerCase().contains(lowercaseQuery) ||
+          country.code.toLowerCase().contains(lowercaseQuery))
+        .toList();
+  }
+
+  List<Country> _getDefaultCountries() {
+    // Liste de secours avec les pays les plus courants
+    return [
+      Country(name: 'France', code: 'fr', flag: '🇫🇷'),
+      Country(name: 'Espagne', code: 'es', flag: '🇪🇸'),
+      Country(name: 'Royaume-Uni', code: 'gb', flag: '🇬🇧'),
+      Country(name: 'États-Unis', code: 'us', flag: '🇺🇸'),
+      Country(name: 'Allemagne', code: 'de', flag: '🇩🇪'),
+      Country(name: 'Italie', code: 'it', flag: '🇮🇹'),
+      Country(name: 'Portugal', code: 'pt', flag: '🇵🇹'),
+      Country(name: 'Russie', code: 'ru', flag: '🇷🇺'),
+      Country(name: 'Chine', code: 'cn', flag: '🇨🇳'),
+      Country(name: 'Japon', code: 'jp', flag: '🇯🇵'),
+      Country(name: 'Brésil', code: 'br', flag: '🇧🇷'),
+      Country(name: 'Mexique', code: 'mx', flag: '🇲🇽'),
+      Country(name: 'Canada', code: 'ca', flag: '🇨🇦'),
+      Country(name: 'Australie', code: 'au', flag: '🇦🇺'),
+      Country(name: 'Inde', code: 'in', flag: '🇮🇳'),
+    ]..sort((a, b) => a.name.compareTo(b.name));
+  }
+
+  void clearCache() {
+    _cachedCountries = null;
+  }
+}

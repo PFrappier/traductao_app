@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:traductao_app/model/vocabulary_entry.dart';
+import 'package:traductao_app/model/country.dart';
+import 'package:traductao_app/services/countries_service.dart';
+import 'package:traductao_app/widgets/country_selector.dart';
 
 class EditLanguageDialog extends StatefulWidget {
   final VocabularyEntry entry;
@@ -15,19 +18,33 @@ class EditLanguageDialog extends StatefulWidget {
 
 class _EditLanguageDialogState extends State<EditLanguageDialog> {
   late TextEditingController _languageController;
-  late TextEditingController _countryCodeController;
+  Country? _selectedCountry;
+  final CountriesService _countriesService = CountriesService.instance;
 
   @override
   void initState() {
     super.initState();
     _languageController = TextEditingController(text: widget.entry.language);
-    _countryCodeController = TextEditingController(text: widget.entry.countryCode);
+    _loadCurrentCountry();
+  }
+
+  Future<void> _loadCurrentCountry() async {
+    try {
+      await _countriesService.getCountries();
+      final country = _countriesService.findCountryByCode(widget.entry.countryCode);
+      if (country != null) {
+        setState(() {
+          _selectedCountry = country;
+        });
+      }
+    } catch (e) {
+      // En cas d'erreur, garder null
+    }
   }
 
   @override
   void dispose() {
     _languageController.dispose();
-    _countryCodeController.dispose();
     super.dispose();
   }
 
@@ -46,14 +63,26 @@ class _EditLanguageDialogState extends State<EditLanguageDialog> {
             ),
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _countryCodeController,
-            decoration: const InputDecoration(
-              labelText: 'Code du pays (ex: fr, es, en)',
-              border: OutlineInputBorder(),
-              helperText: 'Code à 2 lettres pour le drapeau',
-            ),
-            maxLength: 2,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Drapeau (optionnel)',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              CountrySelector(
+                selectedCountry: _selectedCountry,
+                onCountrySelected: (country) {
+                  setState(() {
+                    _selectedCountry = country;
+                  });
+                },
+                hintText: 'Sélectionner un drapeau (optionnel)',
+              ),
+            ],
           ),
         ],
       ),
@@ -64,10 +93,20 @@ class _EditLanguageDialogState extends State<EditLanguageDialog> {
         ),
         TextButton(
           onPressed: () {
+            if (_languageController.text.trim().isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Veuillez entrer le nom de la langue'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
             final updatedEntry = VocabularyEntry(
               id: widget.entry.id,
               language: _languageController.text.trim(),
-              countryCode: _countryCodeController.text.trim().toLowerCase(),
+              countryCode: _selectedCountry?.code ?? widget.entry.countryCode,
               translations: widget.entry.translations,
             );
             Navigator.of(context).pop(updatedEntry);
