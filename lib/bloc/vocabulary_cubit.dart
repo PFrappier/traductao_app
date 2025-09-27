@@ -28,32 +28,58 @@ class VocabularyCubit extends Cubit<VocabularyState> {
     );
   }
 
-  // Future<void> fetchReports(String? memberAnonymousId) async {
-  //   final log = getLogger("MemberReportsCubit",
-  //       methodName: "fetchReports",
-  //       methodArgs: {'memberAnonymousId': memberAnonymousId});
+  void deleteLanguage(String languageId) {
+    final updatedEntries = state.vocabularyEntries
+        .where((entry) => entry.id != languageId)
+        .toList();
 
-  //   try {
-  //     //memberAnonymousId = "hrxQa8tJPbZ5vLXUIkAPXl5asFA2";
-  //     if (memberAnonymousId == null) {
-  //       log.error("Member anonymous id is empty");
-  //       emit(state.copyWith(status: MemberReportsStatus.success, reports: []));
-  //       return;
-  //     }
-  //     log.debug("Entered method");
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+  }
 
-  //     emit(state.copyWith(status: MemberReportsStatus.loading));
+  void updateLanguage(VocabularyEntry updatedEntry) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == updatedEntry.id) {
+        return updatedEntry;
+      }
+      return entry;
+    }).toList();
 
-  //     List<MemberReport> reports =
-  //         await reportRepository.fetchMemberReports(memberAnonymousId);
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+  }
 
-  //     emit(state.copyWith(
-  //       status: MemberReportsStatus.success,
-  //       reports: reports,
-  //     ));
-  //   } catch (e) {
-  //     log.error("Error when trying to fetch reports", data: {'error': e});
-  //     emit(state.copyWith(status: MemberReportsStatus.failure));
-  //   }
-  // }
+  void addLanguage(VocabularyEntry newEntry) {
+    // Vérifier si une langue avec le même nom existe déjà
+    final existingLanguage = state.vocabularyEntries
+        .where((entry) => entry.language.toLowerCase() == newEntry.language.toLowerCase())
+        .isNotEmpty;
+
+    if (existingLanguage) {
+      // Vous pourriez émettre un état d'erreur ici si nécessaire
+      return;
+    }
+
+    final updatedEntries = [...state.vocabularyEntries, newEntry];
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+  }
+
+  bool languageExists(String languageName) {
+    return state.vocabularyEntries
+        .any((entry) => entry.language.toLowerCase() == languageName.toLowerCase());
+  }
 }
