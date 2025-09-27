@@ -41,9 +41,7 @@ class QuizPage extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             'Aucun quiz disponible',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 12),
           Text(

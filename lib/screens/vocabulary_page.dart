@@ -34,21 +34,27 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
         id: '1',
         language: 'Espagnol',
         countryCode: 'es',
-        translations: List.generate(10, (index) => Translation(
-          id: 'es_$index',
-          text: 'Test $index',
-          translatedText: 'Prueba $index',
-        )),
+        translations: List.generate(
+          10,
+          (index) => Translation(
+            id: 'es_$index',
+            text: 'Test $index',
+            translatedText: 'Prueba $index',
+          ),
+        ),
       ),
       VocabularyEntry(
         id: '2',
         language: 'Anglais',
         countryCode: 'gb',
-        translations: List.generate(13, (index) => Translation(
-          id: 'en_$index',
-          text: 'Test $index',
-          translatedText: 'Test $index',
-        )),
+        translations: List.generate(
+          13,
+          (index) => Translation(
+            id: 'en_$index',
+            text: 'Test $index',
+            translatedText: 'Test $index',
+          ),
+        ),
       ),
     ];
 
@@ -96,10 +102,7 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mon vocabulaire'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Mon vocabulaire'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: BlocBuilder<VocabularyCubit, VocabularyState>(
@@ -111,22 +114,22 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
                   children: [
                     Icon(
                       Icons.language,
-                      size: 64,
+                      size: 80,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     Text(
                       'Aucune langue dans ton vocabulaire',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
-                      'Appuyez sur + pour ajouter ta première langue',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      'Appuie sur + pour ajouter ta première langue',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -140,7 +143,8 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
                 final int cardsPerRow =
                     (availableWidth + spacing) ~/ (150 + spacing);
                 final double cardWidth =
-                    (availableWidth - (cardsPerRow - 1) * spacing) / cardsPerRow;
+                    (availableWidth - (cardsPerRow - 1) * spacing) /
+                    cardsPerRow;
 
                 return Wrap(
                   spacing: spacing,
