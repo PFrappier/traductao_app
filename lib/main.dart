@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:traductao_app/providers/navbar_provider.dart';
 import 'package:traductao_app/bloc/vocabulary_cubit.dart';
 import 'package:traductao_app/router/go_router.dart';
-import 'package:traductao_app/themes/andalusian_theme.dart';
+import 'package:traductao_app/theme/andalusian_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,11 +27,8 @@ class MyApp extends StatelessWidget {
       child: MaterialApp.router(
         title: 'Traductao',
         debugShowCheckedModeBanner: false,
-        // theme: ThemeData(
-        //   colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        // ),
-        theme: ThemeData(colorScheme: AndalusianTheme.lightColorScheme),
-        darkTheme: ThemeData(colorScheme: AndalusianTheme.darkColorScheme),
+        theme: AndalusianTheme.lightTheme,
+        darkTheme: AndalusianTheme.darkTheme,
         routerConfig: router,
       ),
     );
