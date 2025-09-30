@@ -21,15 +21,16 @@ class TranslationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
+      clipBehavior: Clip.antiAlias,
       child: ListTile(
         selected: isSelected,
         selectedTileColor: Theme.of(
           context,
-        ).colorScheme.primaryContainer.withValues(alpha: 0.3),
+        ).colorScheme.secondaryContainer.withValues(alpha: 0.3),
         leading: isSelected
             ? Icon(
                 Icons.check_circle,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.secondary,
               )
             : Icon(
                 Icons.translate,

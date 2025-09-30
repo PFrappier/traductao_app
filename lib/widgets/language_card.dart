@@ -107,7 +107,7 @@ class _LanguageCardState extends State<LanguageCard> {
             ListTile(
               leading: Icon(
                 Icons.edit_outlined,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.secondary,
               ),
               title: const Text('Modifier'),
               subtitle: const Text('Changer le nom ou le drapeau'),

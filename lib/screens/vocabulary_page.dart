@@ -91,7 +91,7 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('${result.language} ajouté avec succès !'),
-          backgroundColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.tertiary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),

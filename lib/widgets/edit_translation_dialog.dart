@@ -64,7 +64,7 @@ class _EditTranslationDialogState extends State<EditTranslationDialog> {
         children: [
           Icon(
             Icons.edit_outlined,
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           const SizedBox(width: 8),
           const Text('Modifier la traduction'),

@@ -52,7 +52,7 @@ class _AddTranslationDialogState extends State<AddTranslationDialog> {
         children: [
           Icon(
             Icons.add_circle_outline,
-            color: Theme.of(context).colorScheme.primary,
+            color: Theme.of(context).colorScheme.secondary,
           ),
           const SizedBox(width: 8),
           const Text('Ajouter une traduction'),

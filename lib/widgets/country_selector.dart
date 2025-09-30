@@ -234,7 +234,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                                       trailing: isSelected
                                           ? Icon(
                                               Icons.check_circle,
-                                              color: Theme.of(context).colorScheme.primary,
+                                              color: Theme.of(context).colorScheme.secondary,
                                             )
                                           : null,
                                       selected: isSelected,
@@ -261,7 +261,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                                 trailing: isSelected
                                     ? Icon(
                                         Icons.check_circle,
-                                        color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(context).colorScheme.secondary,
                                       )
                                     : null,
                                 selected: isSelected,
