@@ -4,7 +4,94 @@ import 'package:traductao_app/model/vocabulary_entry.dart';
 import 'package:traductao_app/model/translation.dart';
 
 class VocabularyCubit extends Cubit<VocabularyState> {
-  VocabularyCubit() : super(const VocabularyState());
+  VocabularyCubit() : super(const VocabularyState()) {
+    loadMockData();
+  }
+
+  String _generateId() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  void loadMockData() {
+    final mockEntries = [
+      VocabularyEntry(
+        id: _generateId(),
+        language: 'Espagnol',
+        countryCode: 'ES',
+        translations: [
+          Translation(
+            id: '${_generateId()}_1',
+            text: 'Bonjour',
+            translatedText: 'Hola',
+          ),
+          Translation(
+            id: '${_generateId()}_2',
+            text: 'Au revoir',
+            translatedText: 'Adiós',
+          ),
+          Translation(
+            id: '${_generateId()}_3',
+            text: 'Merci',
+            translatedText: 'Gracias',
+          ),
+          Translation(
+            id: '${_generateId()}_4',
+            text: 'S\'il vous plaît',
+            translatedText: 'Por favor',
+          ),
+          Translation(
+            id: '${_generateId()}_5',
+            text: 'Oui',
+            translatedText: 'Sí',
+          ),
+          Translation(
+            id: '${_generateId()}_6',
+            text: 'Non',
+            translatedText: 'No',
+          ),
+        ],
+      ),
+      VocabularyEntry(
+        id: _generateId(),
+        language: 'Anglais',
+        countryCode: 'GB',
+        translations: [
+          Translation(
+            id: '${_generateId()}_7',
+            text: 'Bonjour',
+            translatedText: 'Hello',
+          ),
+          Translation(
+            id: '${_generateId()}_8',
+            text: 'Au revoir',
+            translatedText: 'Goodbye',
+          ),
+          Translation(
+            id: '${_generateId()}_9',
+            text: 'Merci',
+            translatedText: 'Thank you',
+          ),
+          Translation(
+            id: '${_generateId()}_10',
+            text: 'S\'il vous plaît',
+            translatedText: 'Please',
+          ),
+          Translation(
+            id: '${_generateId()}_11',
+            text: 'Bienvenue',
+            translatedText: 'Welcome',
+          ),
+        ],
+      ),
+    ];
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: mockEntries,
+      ),
+    );
+  }
 
   List<VocabularyEntry> get vocabularyEntries => state.vocabularyEntries;
 

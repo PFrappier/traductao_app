@@ -199,6 +199,8 @@ class QuizDialog extends StatefulWidget {
 class _QuizDialogState extends State<QuizDialog> {
   int _currentQuestionIndex = 0;
   final TextEditingController _answerController = TextEditingController();
+  bool _isAnswerValidated = false;
+  bool _isCorrect = false;
 
   @override
   void dispose() {
@@ -212,17 +214,26 @@ class _QuizDialogState extends State<QuizDialog> {
   Translation get _currentTranslation =>
       widget.translations[_currentQuestionIndex];
 
+  void _validateAnswer() {
+    final userAnswer = _answerController.text.trim().toLowerCase();
+    final correctAnswer = _currentTranslation.translatedText.trim().toLowerCase();
+
+    setState(() {
+      _isAnswerValidated = true;
+      _isCorrect = userAnswer == correctAnswer;
+    });
+  }
+
   void _nextQuestion() {
     if (_currentQuestionIndex < widget.translations.length - 1) {
       setState(() {
         _currentQuestionIndex++;
         _answerController.clear();
+        _isAnswerValidated = false;
+        _isCorrect = false;
       });
     } else {
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Quiz terminé !')));
     }
   }
 
@@ -293,16 +304,60 @@ class _QuizDialogState extends State<QuizDialog> {
                   border: OutlineInputBorder(),
                 ),
                 autofocus: true,
+                enabled: !_isAnswerValidated,
               ),
+              const SizedBox(height: 20),
+              if (_isAnswerValidated)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _isCorrect
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _isCorrect ? Colors.green : Colors.red,
+                      width: 2,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            _isCorrect ? Icons.check_circle : Icons.cancel,
+                            color: _isCorrect ? Colors.green : Colors.red,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _isCorrect
+                                  ? 'Bravo ! C\'est la bonne réponse 🎉'
+                                  : 'Bonne réponse : ${_currentTranslation.translatedText}',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: _isCorrect ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               const Spacer(),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _nextQuestion,
+                  onPressed: _isAnswerValidated ? _nextQuestion : _validateAnswer,
                   child: Text(
-                    _currentQuestionIndex < widget.translations.length - 1
-                        ? 'Question suivante'
-                        : 'Terminer le quiz',
+                    _isAnswerValidated
+                        ? (_currentQuestionIndex < widget.translations.length - 1
+                            ? 'Question suivante'
+                            : 'Terminer le quiz')
+                        : 'Valider',
                   ),
                 ),
               ),
