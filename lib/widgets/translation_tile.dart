@@ -7,6 +7,7 @@ class TranslationTile extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onEdit;
+  final VoidCallback? onToggleQuiz;
 
   const TranslationTile({
     super.key,
@@ -15,6 +16,7 @@ class TranslationTile extends StatelessWidget {
     this.onTap,
     this.onLongPress,
     this.onEdit,
+    this.onToggleQuiz,
   });
 
   @override
@@ -47,9 +49,28 @@ class TranslationTile extends StatelessWidget {
           ),
         ),
         trailing: !isSelected
-            ? IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: onEdit,
+            ? Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      translation.includeInQuiz
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                    ),
+                    color: translation.includeInQuiz
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    tooltip: translation.includeInQuiz
+                        ? 'Visible dans les quiz'
+                        : 'Caché des quiz',
+                    onPressed: onToggleQuiz,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: onEdit,
+                  ),
+                ],
               )
             : null,
         onTap: onTap,

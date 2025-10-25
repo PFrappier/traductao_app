@@ -156,16 +156,20 @@ class _QuizPageState extends State<QuizPage> {
       (entry) => entry.language == _selectedLanguage,
     );
 
-    if (selectedEntry.translations.isEmpty) {
+    final visibleTranslations = selectedEntry.translations
+        .where((translation) => translation.includeInQuiz)
+        .toList();
+
+    if (visibleTranslations.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Aucune traduction disponible pour cette langue'),
+          content: Text('Aucune traduction visible disponible pour cette langue'),
         ),
       );
       return;
     }
 
-    final availableTranslations = selectedEntry.translations.toList()
+    final availableTranslations = visibleTranslations.toList()
       ..shuffle(Random());
     final quizTranslations = availableTranslations
         .take(numberOfQuestions)

@@ -219,4 +219,37 @@ class VocabularyCubit extends Cubit<VocabularyState> {
       ),
     );
   }
+
+  void toggleQuizInclusion(String languageId, String translationId) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == languageId) {
+        final updatedTranslations = entry.translations.map((translation) {
+          if (translation.id == translationId) {
+            return Translation(
+              id: translation.id,
+              text: translation.text,
+              translatedText: translation.translatedText,
+              includeInQuiz: !translation.includeInQuiz,
+            );
+          }
+          return translation;
+        }).toList();
+
+        return VocabularyEntry(
+          id: entry.id,
+          language: entry.language,
+          countryCode: entry.countryCode,
+          translations: updatedTranslations,
+        );
+      }
+      return entry;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+  }
 }

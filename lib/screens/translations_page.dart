@@ -167,6 +167,9 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
                         },
                         onLongPress: () => _toggleSelection(translation.id),
                         onEdit: () => _handleEditTranslation(context, entry.id, translation),
+                        onToggleQuiz: () {
+                          context.read<VocabularyCubit>().toggleQuizInclusion(entry.id, translation.id);
+                        },
                       );
                     },
                   ),
