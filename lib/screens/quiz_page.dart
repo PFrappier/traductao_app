@@ -179,11 +179,24 @@ class _QuizPageState extends State<QuizPage> {
       return;
     }
 
-    final availableTranslations = visibleTranslations.toList()
-      ..shuffle(Random());
-    final quizTranslations = availableTranslations
-        .take(numberOfQuestions)
-        .toList();
+    final quizTranslations = <Translation>[];
+    final random = Random();
+
+    if (numberOfQuestions <= visibleTranslations.length) {
+      final shuffled = visibleTranslations.toList()..shuffle(random);
+      quizTranslations.addAll(shuffled.take(numberOfQuestions));
+    } else {
+      final pool = visibleTranslations.toList();
+
+      while (quizTranslations.length < numberOfQuestions) {
+        final shuffled = pool.toList()..shuffle(random);
+
+        final remaining = numberOfQuestions - quizTranslations.length;
+        quizTranslations.addAll(
+          shuffled.take(remaining > shuffled.length ? shuffled.length : remaining),
+        );
+      }
+    }
 
     showDialog(
       context: context,
