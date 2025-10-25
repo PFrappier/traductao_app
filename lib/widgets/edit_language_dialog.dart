@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:traductao_app/bloc/countries_cubit.dart';
 import 'package:traductao_app/model/vocabulary_entry.dart';
 import 'package:traductao_app/model/country.dart';
-import 'package:traductao_app/services/countries_service.dart';
 import 'package:traductao_app/widgets/country_selector.dart';
 
 class EditLanguageDialog extends StatefulWidget {
@@ -19,7 +20,6 @@ class EditLanguageDialog extends StatefulWidget {
 class _EditLanguageDialogState extends State<EditLanguageDialog> {
   late TextEditingController _languageController;
   Country? _selectedCountry;
-  final CountriesService _countriesService = CountriesService.instance;
 
   @override
   void initState() {
@@ -29,16 +29,15 @@ class _EditLanguageDialogState extends State<EditLanguageDialog> {
   }
 
   Future<void> _loadCurrentCountry() async {
-    try {
-      await _countriesService.getCountries();
-      final country = _countriesService.findCountryByCode(widget.entry.countryCode);
-      if (country != null) {
-        setState(() {
-          _selectedCountry = country;
-        });
-      }
-    } catch (e) {
-      // En cas d'erreur, garder null
+    final cubit = context.read<CountriesCubit>();
+    await cubit.loadCountries();
+    if (!mounted) return;
+
+    final country = cubit.findCountryByCode(widget.entry.countryCode);
+    if (country != null) {
+      setState(() {
+        _selectedCountry = country;
+      });
     }
   }
 

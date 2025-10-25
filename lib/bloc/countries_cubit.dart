@@ -1,57 +1,59 @@
 import 'dart:convert';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
+import 'package:traductao_app/bloc/countries_state.dart';
 import 'package:traductao_app/model/country.dart';
 
-class CountriesService {
+class CountriesCubit extends Cubit<CountriesState> {
   static const String _baseUrl = 'https://restcountries.com/v3.1';
 
-  static CountriesService? _instance;
-  List<Country>? _cachedCountries;
+  CountriesCubit() : super(const CountriesState());
 
-  CountriesService._();
-
-  static CountriesService get instance {
-    _instance ??= CountriesService._();
-    return _instance!;
-  }
-
-  Future<List<Country>> getCountries() async {
-    // Retourner les données en cache si disponibles
-    if (_cachedCountries != null) {
-      return _cachedCountries!;
+  Future<void> loadCountries() async {
+    if (state.status == CountriesStatus.success) {
+      // Les pays sont déjà chargés, ne pas recharger
+      return;
     }
+
+    emit(state.copyWith(status: CountriesStatus.loading));
 
     try {
       final response = await http.get(
-        Uri.parse('$_baseUrl/all?fields=name,cca2,flag'),
+        Uri.parse('$_baseUrl/all?fields=name,translations,cca2,flag'),
         headers: {'Accept': 'application/json'},
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
 
-        _cachedCountries = jsonData
+        final countries = jsonData
             .map((countryJson) => Country.fromJson(countryJson))
             .toList();
 
         // Trier par nom pour une meilleure UX
-        _cachedCountries!.sort((a, b) => a.name.compareTo(b.name));
+        countries.sort((a, b) => a.name.compareTo(b.name));
 
-        return _cachedCountries!;
+        emit(state.copyWith(
+          status: CountriesStatus.success,
+          countries: countries,
+        ));
       } else {
         throw Exception('Erreur lors du chargement des pays: ${response.statusCode}');
       }
     } catch (e) {
-      // En cas d'erreur, retourner une liste de pays par défaut
-      return _getDefaultCountries();
+      // En cas d'erreur, utiliser une liste de pays par défaut
+      final defaultCountries = _getDefaultCountries();
+      emit(state.copyWith(
+        status: CountriesStatus.success,
+        countries: defaultCountries,
+        errorMessage: 'Connexion limitée - liste de pays réduite',
+      ));
     }
   }
 
   Country? findCountryByCode(String code) {
-    if (_cachedCountries == null) return null;
-
     try {
-      return _cachedCountries!.firstWhere(
+      return state.countries.firstWhere(
         (country) => country.code.toLowerCase() == code.toLowerCase(),
       );
     } catch (e) {
@@ -60,15 +62,13 @@ class CountriesService {
   }
 
   List<Country> searchCountries(String query) {
-    if (_cachedCountries == null) return [];
-
-    if (query.isEmpty) return _cachedCountries!;
+    if (query.isEmpty) return state.countries;
 
     final lowercaseQuery = query.toLowerCase();
-    return _cachedCountries!
+    return state.countries
         .where((country) =>
-          country.name.toLowerCase().contains(lowercaseQuery) ||
-          country.code.toLowerCase().contains(lowercaseQuery))
+            country.name.toLowerCase().contains(lowercaseQuery) ||
+            country.code.toLowerCase().contains(lowercaseQuery))
         .toList();
   }
 
@@ -94,6 +94,6 @@ class CountriesService {
   }
 
   void clearCache() {
-    _cachedCountries = null;
+    emit(const CountriesState());
   }
 }

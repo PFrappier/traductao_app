@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:traductao_app/bloc/countries_cubit.dart';
+import 'package:traductao_app/bloc/countries_state.dart';
 import 'package:traductao_app/model/country.dart';
-import 'package:traductao_app/services/countries_service.dart';
 
 class CountrySelector extends StatefulWidget {
   final Country? selectedCountry;
@@ -19,37 +21,23 @@ class CountrySelector extends StatefulWidget {
 }
 
 class _CountrySelectorState extends State<CountrySelector> {
-  final CountriesService _countriesService = CountriesService.instance;
-  List<Country> _countries = [];
   List<Country> _filteredCountries = [];
-  bool _isLoading = true;
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
-    _loadCountries();
+    // Charger les pays au démarrage
+    context.read<CountriesCubit>().loadCountries();
   }
 
-  Future<void> _loadCountries() async {
-    try {
-      final countries = await _countriesService.getCountries();
-      setState(() {
-        _countries = countries;
-        _filteredCountries = countries;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _filterCountries(String query) {
+  void _filterCountries(String query, List<Country> allCountries) {
     setState(() {
+      _searchQuery = query;
       if (query.isEmpty) {
-        _filteredCountries = _countries;
+        _filteredCountries = allCountries;
       } else {
-        _filteredCountries = _countries
+        _filteredCountries = allCountries
             .where((country) =>
                 country.name.toLowerCase().contains(query.toLowerCase()) ||
                 country.code.toLowerCase().contains(query.toLowerCase()))
@@ -128,7 +116,6 @@ class _CountrySelectorState extends State<CountrySelector> {
           ),
           child: Column(
             children: [
-              // Handle bar
               Container(
                 margin: const EdgeInsets.only(top: 12, bottom: 8),
                 width: 40,
@@ -138,7 +125,6 @@ class _CountrySelectorState extends State<CountrySelector> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
                 child: Row(
@@ -158,27 +144,66 @@ class _CountrySelectorState extends State<CountrySelector> {
                   ],
                 ),
               ),
-              // Search bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Rechercher un pays...',
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  onChanged: _filterCountries,
+                child: BlocBuilder<CountriesCubit, CountriesState>(
+                  builder: (context, state) {
+                    return TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher un pays...',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                      onChanged: (query) => _filterCountries(query, state.countries),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),
-              // Countries list
               Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _filteredCountries.isEmpty
+                child: BlocBuilder<CountriesCubit, CountriesState>(
+                  builder: (context, state) {
+                    // Initialiser les pays filtrés si nécessaire
+                    if (_filteredCountries.isEmpty && _searchQuery.isEmpty && state.countries.isNotEmpty) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _filteredCountries = state.countries;
+                          });
+                        }
+                      });
+                    }
+
+                    if (state.status == CountriesStatus.loading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (state.status == CountriesStatus.error) {
+                      return Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Erreur de chargement',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final displayCountries = _searchQuery.isEmpty ? state.countries : _filteredCountries;
+
+                    return displayCountries.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
@@ -206,9 +231,8 @@ class _CountrySelectorState extends State<CountrySelector> {
                           )
                         : ListView.builder(
                             controller: scrollController,
-                            itemCount: _filteredCountries.length + 1, // +1 pour l'option "Aucun drapeau"
+                            itemCount: displayCountries.length + 1,
                             itemBuilder: (context, index) {
-                              // Premier élément : option "Aucun drapeau"
                               if (index == 0) {
                                 final isSelected = widget.selectedCountry == null || widget.selectedCountry!.code.isEmpty;
                                 return Column(
@@ -249,7 +273,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                               }
 
                               // Éléments suivants : pays
-                              final country = _filteredCountries[index - 1];
+                              final country = displayCountries[index - 1];
                               final isSelected = widget.selectedCountry?.code == country.code;
 
                               return ListTile(
@@ -271,7 +295,9 @@ class _CountrySelectorState extends State<CountrySelector> {
                                 },
                               );
                             },
-                          ),
+                          );
+                  },
+                ),
               ),
             ],
           ),

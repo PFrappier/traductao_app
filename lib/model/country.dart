@@ -11,7 +11,7 @@ class Country {
 
   factory Country.fromJson(Map<String, dynamic> json) {
     return Country(
-      name: json['name']['common'] as String,
+      name: json['translations']['fra']['common'] as String,
       code: (json['cca2'] as String).toLowerCase(),
       flag: json['flag'] as String,
     );
