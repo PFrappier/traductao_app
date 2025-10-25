@@ -18,6 +18,7 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   String? _selectedLanguage;
   String? _languageError;
+  String? _numberOfQuestionsError;
   final TextEditingController _numberOfQuestionsController =
       TextEditingController();
 
@@ -120,11 +121,19 @@ class _QuizPageState extends State<QuizPage> {
         const SizedBox(height: 20),
         TextField(
           controller: _numberOfQuestionsController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: "Nombre de questions",
-            border: OutlineInputBorder(),
+            border: const OutlineInputBorder(),
+            errorText: _numberOfQuestionsError,
           ),
           keyboardType: TextInputType.number,
+          onChanged: (value) {
+            if (_numberOfQuestionsError != null) {
+              setState(() {
+                _numberOfQuestionsError = null;
+              });
+            }
+          },
         ),
         const Spacer(),
         TextButtonWithIcon(
@@ -147,11 +156,9 @@ class _QuizPageState extends State<QuizPage> {
 
     final numberOfQuestions = int.tryParse(_numberOfQuestionsController.text);
     if (numberOfQuestions == null || numberOfQuestions <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez entrer un nombre de questions valide'),
-        ),
-      );
+      setState(() {
+        _numberOfQuestionsError = 'Veuillez entrer un nombre valide';
+      });
       return;
     }
 
