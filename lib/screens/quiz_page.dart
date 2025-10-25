@@ -17,6 +17,7 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
   String? _selectedLanguage;
+  String? _languageError;
   final TextEditingController _numberOfQuestionsController =
       TextEditingController();
 
@@ -100,9 +101,11 @@ class _QuizPageState extends State<QuizPage> {
         DropdownMenu<String>(
           label: const Text("Langue"),
           width: double.infinity,
+          errorText: _languageError,
           onSelected: (String? value) {
             setState(() {
               _selectedLanguage = value;
+              _languageError = null;
             });
           },
           dropdownMenuEntries: state.vocabularyEntries
@@ -136,9 +139,9 @@ class _QuizPageState extends State<QuizPage> {
 
   void _launchQuiz(BuildContext context, VocabularyState state) {
     if (_selectedLanguage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez sélectionner une langue')),
-      );
+      setState(() {
+        _languageError = 'Veuillez sélectionner une langue';
+      });
       return;
     }
 
