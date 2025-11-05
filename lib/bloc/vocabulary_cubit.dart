@@ -1,96 +1,58 @@
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:traductao_app/bloc/vocabulary_state.dart';
 import 'package:traductao_app/model/vocabulary_entry.dart';
 import 'package:traductao_app/model/translation.dart';
 
 class VocabularyCubit extends Cubit<VocabularyState> {
+  static const String _vocabularyKey = 'vocabulary_entries';
+
   VocabularyCubit() : super(const VocabularyState()) {
-    loadMockData();
+    loadVocabulary();
   }
 
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString();
+  Future<void> _saveVocabulary() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonList = state.vocabularyEntries.map((e) => e.toJson()).toList();
+      await prefs.setString(_vocabularyKey, jsonEncode(jsonList));
+    } catch (e) {
+      print('Erreur lors de la sauvegarde: $e');
+    }
   }
 
-  void loadMockData() {
-    final mockEntries = [
-      VocabularyEntry(
-        id: _generateId(),
-        language: 'Espagnol',
-        countryCode: 'ES',
-        translations: [
-          Translation(
-            id: '${_generateId()}_1',
-            text: 'Bonjour',
-            translatedText: 'Hola',
-          ),
-          Translation(
-            id: '${_generateId()}_2',
-            text: 'Au revoir',
-            translatedText: 'Adiós',
-          ),
-          Translation(
-            id: '${_generateId()}_3',
-            text: 'Merci',
-            translatedText: 'Gracias',
-          ),
-          Translation(
-            id: '${_generateId()}_4',
-            text: 'S\'il vous plaît',
-            translatedText: 'Por favor',
-          ),
-          Translation(
-            id: '${_generateId()}_5',
-            text: 'Oui',
-            translatedText: 'Sí',
-          ),
-          Translation(
-            id: '${_generateId()}_6',
-            text: 'Non',
-            translatedText: 'No',
-          ),
-        ],
-      ),
-      VocabularyEntry(
-        id: _generateId(),
-        language: 'Anglais',
-        countryCode: 'GB',
-        translations: [
-          Translation(
-            id: '${_generateId()}_7',
-            text: 'Bonjour',
-            translatedText: 'Hello',
-          ),
-          Translation(
-            id: '${_generateId()}_8',
-            text: 'Au revoir',
-            translatedText: 'Goodbye',
-          ),
-          Translation(
-            id: '${_generateId()}_9',
-            text: 'Merci',
-            translatedText: 'Thank you',
-          ),
-          Translation(
-            id: '${_generateId()}_10',
-            text: 'S\'il vous plaît',
-            translatedText: 'Please',
-          ),
-          Translation(
-            id: '${_generateId()}_11',
-            text: 'Bienvenue',
-            translatedText: 'Welcome',
-          ),
-        ],
-      ),
-    ];
+  Future<void> loadVocabulary() async {
+    emit(state.copyWith(status: VocabularyStatus.loading));
 
-    emit(
-      state.copyWith(
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_vocabularyKey);
+
+      if (jsonString == null || jsonString.isEmpty) {
+        emit(state.copyWith(
+          status: VocabularyStatus.success,
+          vocabularyEntries: [],
+        ));
+        return;
+      }
+
+      final jsonList = jsonDecode(jsonString) as List;
+      final entries = jsonList
+          .map((e) => VocabularyEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      emit(state.copyWith(
         status: VocabularyStatus.success,
-        vocabularyEntries: mockEntries,
-      ),
-    );
+        vocabularyEntries: entries,
+      ));
+    } catch (e) {
+      print('Erreur lors du chargement: $e');
+      emit(state.copyWith(
+        status: VocabularyStatus.failure,
+        vocabularyEntries: [],
+      ));
+    }
   }
 
   List<VocabularyEntry> get vocabularyEntries => state.vocabularyEntries;
@@ -114,6 +76,7 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: updatedEntries,
       ),
     );
+    _saveVocabulary();
   }
 
   void deleteLanguage(String languageId) {
@@ -127,6 +90,7 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: updatedEntries,
       ),
     );
+    _saveVocabulary();
   }
 
   void updateLanguage(VocabularyEntry updatedEntry) {
@@ -143,16 +107,15 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: updatedEntries,
       ),
     );
+    _saveVocabulary();
   }
 
   void addLanguage(VocabularyEntry newEntry) {
-    // Vérifier si une langue avec le même nom existe déjà
     final existingLanguage = state.vocabularyEntries
         .where((entry) => entry.language.toLowerCase() == newEntry.language.toLowerCase())
         .isNotEmpty;
 
     if (existingLanguage) {
-      // Vous pourriez émettre un état d'erreur ici si nécessaire
       return;
     }
 
@@ -164,6 +127,7 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: updatedEntries,
       ),
     );
+    _saveVocabulary();
   }
 
   bool languageExists(String languageName) {
@@ -190,6 +154,7 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: updatedEntries,
       ),
     );
+    _saveVocabulary();
   }
 
   void updateTranslation(String languageId, Translation updatedTranslation) {
@@ -218,6 +183,7 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: updatedEntries,
       ),
     );
+    _saveVocabulary();
   }
 
   void toggleQuizInclusion(String languageId, String translationId) {
@@ -251,5 +217,6 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: updatedEntries,
       ),
     );
+    _saveVocabulary();
   }
 }

@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp.router(
         title: 'Traductao',
         debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.light,
         theme: AndalusianTheme.lightTheme,
         darkTheme: AndalusianTheme.darkTheme,
         routerConfig: router,
