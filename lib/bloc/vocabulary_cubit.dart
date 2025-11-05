@@ -18,7 +18,31 @@ class VocabularyCubit extends Cubit<VocabularyState> {
       final jsonList = state.vocabularyEntries.map((e) => e.toJson()).toList();
       await prefs.setString(_vocabularyKey, jsonEncode(jsonList));
     } catch (e) {
-      print('Erreur lors de la sauvegarde: $e');
+      // Erreur lors de la sauvegarde
+    }
+  }
+
+  String exportVocabulary() {
+    final jsonList = state.vocabularyEntries.map((e) => e.toJson()).toList();
+    return jsonEncode(jsonList);
+  }
+
+  Future<bool> importVocabulary(String jsonString) async {
+    try {
+      final jsonList = jsonDecode(jsonString) as List;
+      final entries = jsonList
+          .map((e) => VocabularyEntry.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      emit(state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: entries,
+      ));
+
+      await _saveVocabulary();
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -47,7 +71,7 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         vocabularyEntries: entries,
       ));
     } catch (e) {
-      print('Erreur lors du chargement: $e');
+      // Erreur lors du chargement
       emit(state.copyWith(
         status: VocabularyStatus.failure,
         vocabularyEntries: [],

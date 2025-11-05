@@ -31,7 +31,7 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Traduction ajoutée avec succès !'),
-          backgroundColor: Theme.of(context).colorScheme.tertiary,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -51,7 +51,7 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Traduction modifiée avec succès !'),
-          backgroundColor: Theme.of(context).colorScheme.tertiary,
+          backgroundColor: Theme.of(context).colorScheme.secondary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -96,7 +96,7 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${_selectedTranslationIds.length} traduction${_selectedTranslationIds.length > 1 ? 's supprimées' : ' supprimée'} !'),
-                    backgroundColor: Theme.of(context).colorScheme.tertiary,
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                     behavior: SnackBarBehavior.floating,
                     duration: const Duration(seconds: 2),
                   ),
