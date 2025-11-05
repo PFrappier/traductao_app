@@ -205,37 +205,44 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
         title: const Text('Mon vocabulaire'),
         centerTitle: true,
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) {
-              if (value == 'export') {
-                _handleExport();
-              } else if (value == 'import') {
-                _handleImport();
-              }
+          BlocBuilder<VocabularyCubit, VocabularyState>(
+            builder: (context, state) {
+              final hasEntries = state.vocabularyEntries.isNotEmpty;
+
+              return PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) {
+                  if (value == 'export') {
+                    _handleExport();
+                  } else if (value == 'import') {
+                    _handleImport();
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  if (hasEntries)
+                    const PopupMenuItem<String>(
+                      value: 'export',
+                      child: Row(
+                        children: [
+                          Icon(Icons.upload),
+                          SizedBox(width: 8),
+                          Text('Exporter mon vocabulaire'),
+                        ],
+                      ),
+                    ),
+                  const PopupMenuItem<String>(
+                    value: 'import',
+                    child: Row(
+                      children: [
+                        Icon(Icons.download),
+                        SizedBox(width: 8),
+                        Text('Importer un fichier de vocabulaire'),
+                      ],
+                    ),
+                  ),
+                ],
+              );
             },
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
-                value: 'export',
-                child: Row(
-                  children: [
-                    Icon(Icons.upload),
-                    SizedBox(width: 8),
-                    Text('Exporter mon vocabulaire'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem<String>(
-                value: 'import',
-                child: Row(
-                  children: [
-                    Icon(Icons.download),
-                    SizedBox(width: 8),
-                    Text('Importer un fichier de vocabulaire'),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),
