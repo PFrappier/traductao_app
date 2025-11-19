@@ -7,46 +7,47 @@ import 'package:traductao_app/widgets/add_translation_dialog.dart';
 import 'package:traductao_app/widgets/edit_translation_dialog.dart';
 import 'package:traductao_app/widgets/translation_tile.dart';
 
-class MyTranslationsPage extends StatefulWidget {
-  final String country;
+class GroupTranslationsPage extends StatefulWidget {
+  final String groupName;
+  final String languageId;
+  final String groupId;
 
-  const MyTranslationsPage({super.key, required this.country});
+  const GroupTranslationsPage({
+    super.key,
+    required this.groupName,
+    required this.languageId,
+    required this.groupId,
+  });
 
   @override
-  State<MyTranslationsPage> createState() => _MyTranslationsPageState();
+  State<GroupTranslationsPage> createState() => _GroupTranslationsPageState();
 }
 
-class _MyTranslationsPageState extends State<MyTranslationsPage> {
+class _GroupTranslationsPageState extends State<GroupTranslationsPage> {
   final Set<String> _selectedTranslationIds = {};
 
-  void _handleAddTranslation(BuildContext context, String languageId) async {
-    final result = await showDialog<Translation>(
-      context: context,
-      builder: (context) => const AddTranslationDialog(),
-    );
-
-    if (result != null && context.mounted) {
-      context.read<VocabularyCubit>().addTranslation(languageId, result);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Traduction ajoutée avec succès !'),
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+  void _toggleSelection(String translationId) {
+    setState(() {
+      if (_selectedTranslationIds.contains(translationId)) {
+        _selectedTranslationIds.remove(translationId);
+      } else {
+        _selectedTranslationIds.add(translationId);
+      }
+    });
   }
 
-  void _handleEditTranslation(BuildContext context, String languageId, Translation translation) async {
+  void _handleEditTranslation(BuildContext context, Translation translation) async {
     final result = await showDialog<Translation>(
       context: context,
       builder: (context) => EditTranslationDialog(translation: translation),
     );
 
     if (result != null && mounted) {
-      context.read<VocabularyCubit>().updateTranslation(languageId, result);
+      context.read<VocabularyCubit>().updateTranslation(
+        widget.languageId,
+        widget.groupId,
+        result,
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -59,14 +60,28 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
     }
   }
 
-  void _toggleSelection(String translationId) {
-    setState(() {
-      if (_selectedTranslationIds.contains(translationId)) {
-        _selectedTranslationIds.remove(translationId);
-      } else {
-        _selectedTranslationIds.add(translationId);
-      }
-    });
+  void _handleAddTranslation(BuildContext context) async {
+    final result = await showDialog<Translation>(
+      context: context,
+      builder: (context) => const AddTranslationDialog(),
+    );
+
+    if (result != null && mounted) {
+      context.read<VocabularyCubit>().addTranslation(
+        widget.languageId,
+        widget.groupId,
+        result,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Traduction ajoutée avec succès !'),
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _deleteSelectedTranslations(BuildContext context) {
@@ -87,15 +102,20 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
             ),
             TextButton(
               onPressed: () {
+                final count = _selectedTranslationIds.length;
                 Navigator.of(dialogContext).pop();
-                context.read<VocabularyCubit>().deleteTranslations(_selectedTranslationIds.toList());
+                context.read<VocabularyCubit>().deleteTranslations(
+                  widget.languageId,
+                  widget.groupId,
+                  _selectedTranslationIds.toList(),
+                );
                 setState(() {
                   _selectedTranslationIds.clear();
                 });
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('${_selectedTranslationIds.length} traduction${_selectedTranslationIds.length > 1 ? 's supprimées' : ' supprimée'} !'),
+                    content: Text('$count traduction${count > 1 ? 's supprimées' : ' supprimée'} !'),
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                     behavior: SnackBarBehavior.floating,
                     duration: const Duration(seconds: 2),
@@ -117,16 +137,27 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
   Widget build(BuildContext context) {
     return BlocBuilder<VocabularyCubit, VocabularyState>(
       builder: (context, state) {
-        final entry = state.vocabularyEntries.firstWhere(
-          (e) => e.language == widget.country,
-          orElse: () => state.vocabularyEntries.first,
+        final group = context.read<VocabularyCubit>().getGroupById(
+          widget.languageId,
+          widget.groupId,
         );
+
+        if (group == null) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(widget.groupName),
+            ),
+            body: const Center(
+              child: Text('Groupe introuvable'),
+            ),
+          );
+        }
 
         final bool hasSelection = _selectedTranslationIds.isNotEmpty;
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(hasSelection ? '${_selectedTranslationIds.length} sélectionné${_selectedTranslationIds.length > 1 ? 's' : ''}' : widget.country),
+            title: Text(hasSelection ? '${_selectedTranslationIds.length} sélectionné${_selectedTranslationIds.length > 1 ? 's' : ''}' : widget.groupName),
             centerTitle: true,
             leading: hasSelection
                 ? IconButton(
@@ -149,12 +180,12 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
           ),
           body: Padding(
             padding: const EdgeInsets.all(20.0),
-            child: entry.translations.isEmpty
-                ? _buildEmptyState(context, entry.id)
+            child: group.translations.isEmpty
+                ? _buildEmptyState(context)
                 : ListView.builder(
-                    itemCount: entry.translations.length,
+                    itemCount: group.translations.length,
                     itemBuilder: (context, index) {
-                      final translation = entry.translations[index];
+                      final translation = group.translations[index];
                       final isSelected = _selectedTranslationIds.contains(translation.id);
 
                       return TranslationTile(
@@ -166,9 +197,13 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
                           }
                         },
                         onLongPress: () => _toggleSelection(translation.id),
-                        onEdit: () => _handleEditTranslation(context, entry.id, translation),
+                        onEdit: () => _handleEditTranslation(context, translation),
                         onToggleQuiz: () {
-                          context.read<VocabularyCubit>().toggleQuizInclusion(entry.id, translation.id);
+                          context.read<VocabularyCubit>().toggleQuizInclusion(
+                            widget.languageId,
+                            widget.groupId,
+                            translation.id,
+                          );
                         },
                       );
                     },
@@ -177,7 +212,7 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
           floatingActionButton: hasSelection
               ? null
               : FloatingActionButton(
-                  onPressed: () => _handleAddTranslation(context, entry.id),
+                  onPressed: () => _handleAddTranslation(context),
                   tooltip: 'Ajouter une traduction',
                   child: const Icon(Icons.add),
                 ),
@@ -186,7 +221,7 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context, String languageId) {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -204,7 +239,7 @@ class _MyTranslationsPageState extends State<MyTranslationsPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Appuie sur + pour ajouter ta première traduction',
+            'Appuie sur + pour ajouter une traduction\nà ce groupe',
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),

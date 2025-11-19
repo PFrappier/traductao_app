@@ -44,7 +44,7 @@ class _AddLanguageDialogState extends State<AddLanguageDialog> {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         language: _languageController.text.trim(),
         countryCode: _selectedCountry?.code ?? '',
-        translations: [],
+        groups: [],
       );
       Navigator.of(context).pop(newEntry);
     }

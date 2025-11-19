@@ -31,38 +31,42 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
   }
 
   void _initializeTestData(VocabularyCubit cubit) {
+    // Données de test désactivées - l'utilisateur peut ajouter ses propres langues
+    // Si vous souhaitez réactiver les données de test, décommentez le code ci-dessous
+
+    /*
+    final testTranslations = List.generate(
+      10,
+      (index) => Translation(
+        id: 'es_$index',
+        text: 'Test $index',
+        translatedText: 'Prueba $index',
+      ),
+    );
+
+    final testPacks = <TranslationPack>[];
+    for (var i = 0; i < testTranslations.length; i += 20) {
+      final packTranslations = testTranslations.skip(i).take(20).toList();
+      testPacks.add(TranslationPack(
+        id: '1_pack_${(i ~/ 20) + 1}',
+        packNumber: (i ~/ 20) + 1,
+        translations: packTranslations,
+      ));
+    }
+
     final testEntries = [
       VocabularyEntry(
         id: '1',
         language: 'Espagnol',
         countryCode: 'es',
-        translations: List.generate(
-          10,
-          (index) => Translation(
-            id: 'es_$index',
-            text: 'Test $index',
-            translatedText: 'Prueba $index',
-          ),
-        ),
-      ),
-      VocabularyEntry(
-        id: '2',
-        language: 'Anglais',
-        countryCode: 'gb',
-        translations: List.generate(
-          13,
-          (index) => Translation(
-            id: 'en_$index',
-            text: 'Test $index',
-            translatedText: 'Test $index',
-          ),
-        ),
+        packs: testPacks,
       ),
     ];
 
     for (var entry in testEntries) {
       cubit.updateLanguage(entry);
     }
+    */
   }
 
   void _handleEdit(VocabularyEntry entry) async {

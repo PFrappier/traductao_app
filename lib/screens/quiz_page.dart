@@ -17,7 +17,10 @@ class QuizPage extends StatefulWidget {
 
 class _QuizPageState extends State<QuizPage> {
   String? _selectedLanguage;
+  String? _selectedLanguageId;
+  String? _selectedGroupId;
   String? _languageError;
+  String? _groupError;
   String? _numberOfQuestionsError;
   final TextEditingController _numberOfQuestionsController =
       TextEditingController();
@@ -93,7 +96,7 @@ class _QuizPageState extends State<QuizPage> {
         ),
         const SizedBox(height: 10),
         Text(
-          "Lance un quiz en choisissant la langue que tu souhaites et le nombre de questions auxquelles répondre.",
+          "Lance un quiz en choisissant la langue, le groupe et le nombre de questions auxquelles répondre.",
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -106,7 +109,12 @@ class _QuizPageState extends State<QuizPage> {
           onSelected: (String? value) {
             setState(() {
               _selectedLanguage = value;
+              _selectedLanguageId = state.vocabularyEntries
+                  .firstWhere((e) => e.language == value)
+                  .id;
+              _selectedGroupId = null; // Reset group selection
               _languageError = null;
+              _groupError = null;
             });
           },
           dropdownMenuEntries: state.vocabularyEntries
@@ -119,6 +127,35 @@ class _QuizPageState extends State<QuizPage> {
               .toList(),
         ),
         const SizedBox(height: 20),
+        if (_selectedLanguage != null) ...[
+          DropdownMenu<String>(
+            label: const Text("Groupe"),
+            width: double.infinity,
+            errorText: _groupError,
+            onSelected: (String? value) {
+              setState(() {
+                _selectedGroupId = value;
+                _groupError = null;
+              });
+            },
+            dropdownMenuEntries: [
+              const DropdownMenuEntry(
+                value: 'all',
+                label: 'Tous les groupes',
+              ),
+              ...state.vocabularyEntries
+                  .firstWhere((e) => e.id == _selectedLanguageId)
+                  .groups
+                  .map(
+                    (group) => DropdownMenuEntry(
+                      value: group.id,
+                      label: group.name,
+                    ),
+                  ),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
         TextField(
           controller: _numberOfQuestionsController,
           decoration: InputDecoration(
@@ -154,6 +191,13 @@ class _QuizPageState extends State<QuizPage> {
       return;
     }
 
+    if (_selectedGroupId == null) {
+      setState(() {
+        _groupError = 'Veuillez sélectionner un groupe';
+      });
+      return;
+    }
+
     final numberOfQuestions = int.tryParse(_numberOfQuestionsController.text);
     if (numberOfQuestions == null || numberOfQuestions <= 0) {
       setState(() {
@@ -166,9 +210,22 @@ class _QuizPageState extends State<QuizPage> {
       (entry) => entry.language == _selectedLanguage,
     );
 
-    final visibleTranslations = selectedEntry.translations
-        .where((translation) => translation.includeInQuiz)
-        .toList();
+    List<Translation> visibleTranslations;
+
+    if (_selectedGroupId == 'all') {
+      // Toutes les traductions de la langue
+      visibleTranslations = selectedEntry.translations
+          .where((translation) => translation.includeInQuiz)
+          .toList();
+    } else {
+      // Traductions d'un groupe spécifique
+      final selectedGroup = selectedEntry.groups.firstWhere(
+        (group) => group.id == _selectedGroupId,
+      );
+      visibleTranslations = selectedGroup.translations
+          .where((translation) => translation.includeInQuiz)
+          .toList();
+    }
 
     if (visibleTranslations.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

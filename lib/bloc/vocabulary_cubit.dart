@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:traductao_app/bloc/vocabulary_state.dart';
 import 'package:traductao_app/model/vocabulary_entry.dart';
 import 'package:traductao_app/model/translation.dart';
+import 'package:traductao_app/model/translation_pack.dart';
 
 class VocabularyCubit extends Cubit<VocabularyState> {
   static const String _vocabularyKey = 'vocabulary_entries';
@@ -81,27 +82,7 @@ class VocabularyCubit extends Cubit<VocabularyState> {
 
   List<VocabularyEntry> get vocabularyEntries => state.vocabularyEntries;
 
-  void deleteTranslations(List<String> translationIds) {
-    final updatedEntries = state.vocabularyEntries.map((entry) {
-      final updatedTranslations = entry.translations
-          .where((translation) => !translationIds.contains(translation.id))
-          .toList();
-      return VocabularyEntry(
-        id: entry.id,
-        language: entry.language,
-        countryCode: entry.countryCode,
-        translations: updatedTranslations,
-      );
-    }).toList();
-
-    emit(
-      state.copyWith(
-        status: VocabularyStatus.success,
-        vocabularyEntries: updatedEntries,
-      ),
-    );
-    _saveVocabulary();
-  }
+  // === Gestion des langues ===
 
   void deleteLanguage(String languageId) {
     final updatedEntries = state.vocabularyEntries
@@ -159,14 +140,16 @@ class VocabularyCubit extends Cubit<VocabularyState> {
         .any((entry) => entry.language.toLowerCase() == languageName.toLowerCase());
   }
 
-  void addTranslation(String languageId, Translation newTranslation) {
+  // === Gestion des groupes ===
+
+  void addGroup(String languageId, TranslationGroup newGroup) {
     final updatedEntries = state.vocabularyEntries.map((entry) {
       if (entry.id == languageId) {
         return VocabularyEntry(
           id: entry.id,
           language: entry.language,
           countryCode: entry.countryCode,
-          translations: [...entry.translations, newTranslation],
+          groups: [...entry.groups, newGroup],
         );
       }
       return entry;
@@ -181,21 +164,21 @@ class VocabularyCubit extends Cubit<VocabularyState> {
     _saveVocabulary();
   }
 
-  void updateTranslation(String languageId, Translation updatedTranslation) {
+  void updateGroup(String languageId, TranslationGroup updatedGroup) {
     final updatedEntries = state.vocabularyEntries.map((entry) {
       if (entry.id == languageId) {
-        final updatedTranslations = entry.translations.map((translation) {
-          if (translation.id == updatedTranslation.id) {
-            return updatedTranslation;
+        final updatedGroups = entry.groups.map((group) {
+          if (group.id == updatedGroup.id) {
+            return updatedGroup;
           }
-          return translation;
+          return group;
         }).toList();
 
         return VocabularyEntry(
           id: entry.id,
           language: entry.language,
           countryCode: entry.countryCode,
-          translations: updatedTranslations,
+          groups: updatedGroups,
         );
       }
       return entry;
@@ -210,26 +193,238 @@ class VocabularyCubit extends Cubit<VocabularyState> {
     _saveVocabulary();
   }
 
-  void toggleQuizInclusion(String languageId, String translationId) {
+  void deleteGroup(String languageId, String groupId) {
     final updatedEntries = state.vocabularyEntries.map((entry) {
       if (entry.id == languageId) {
-        final updatedTranslations = entry.translations.map((translation) {
-          if (translation.id == translationId) {
-            return Translation(
-              id: translation.id,
-              text: translation.text,
-              translatedText: translation.translatedText,
-              includeInQuiz: !translation.includeInQuiz,
+        final updatedGroups = entry.groups
+            .where((group) => group.id != groupId)
+            .toList();
+
+        return VocabularyEntry(
+          id: entry.id,
+          language: entry.language,
+          countryCode: entry.countryCode,
+          groups: updatedGroups,
+        );
+      }
+      return entry;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+    _saveVocabulary();
+  }
+
+  void toggleGroupAcquired(String languageId, String groupId) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == languageId) {
+        final updatedGroups = entry.groups.map((group) {
+          if (group.id == groupId) {
+            return group.copyWith(
+              isAcquired: !group.isAcquired,
+              acquiredDate: !group.isAcquired ? DateTime.now() : null,
             );
           }
-          return translation;
+          return group;
         }).toList();
 
         return VocabularyEntry(
           id: entry.id,
           language: entry.language,
           countryCode: entry.countryCode,
-          translations: updatedTranslations,
+          groups: updatedGroups,
+        );
+      }
+      return entry;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+    _saveVocabulary();
+  }
+
+  TranslationGroup? getGroupById(String languageId, String groupId) {
+    final entry = state.vocabularyEntries.firstWhere(
+      (e) => e.id == languageId,
+      orElse: () => VocabularyEntry(
+        id: '',
+        language: '',
+        countryCode: '',
+        groups: [],
+      ),
+    );
+
+    if (entry.id.isEmpty) return null;
+
+    try {
+      return entry.groups.firstWhere((group) => group.id == groupId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // === Gestion des traductions ===
+
+  void addTranslation(String languageId, String groupId, Translation newTranslation) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == languageId) {
+        final updatedGroups = entry.groups.map((group) {
+          if (group.id == groupId) {
+            return TranslationGroup(
+              id: group.id,
+              name: group.name,
+              translations: [...group.translations, newTranslation],
+              isAcquired: group.isAcquired,
+              acquiredDate: group.acquiredDate,
+              description: group.description,
+            );
+          }
+          return group;
+        }).toList();
+
+        return VocabularyEntry(
+          id: entry.id,
+          language: entry.language,
+          countryCode: entry.countryCode,
+          groups: updatedGroups,
+        );
+      }
+      return entry;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+    _saveVocabulary();
+  }
+
+  void updateTranslation(String languageId, String groupId, Translation updatedTranslation) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == languageId) {
+        final updatedGroups = entry.groups.map((group) {
+          if (group.id == groupId) {
+            final updatedTranslations = group.translations.map((translation) {
+              if (translation.id == updatedTranslation.id) {
+                return updatedTranslation;
+              }
+              return translation;
+            }).toList();
+
+            return TranslationGroup(
+              id: group.id,
+              name: group.name,
+              translations: updatedTranslations,
+              isAcquired: group.isAcquired,
+              acquiredDate: group.acquiredDate,
+              description: group.description,
+            );
+          }
+          return group;
+        }).toList();
+
+        return VocabularyEntry(
+          id: entry.id,
+          language: entry.language,
+          countryCode: entry.countryCode,
+          groups: updatedGroups,
+        );
+      }
+      return entry;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+    _saveVocabulary();
+  }
+
+  void deleteTranslations(String languageId, String groupId, List<String> translationIds) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == languageId) {
+        final updatedGroups = entry.groups.map((group) {
+          if (group.id == groupId) {
+            final updatedTranslations = group.translations
+                .where((translation) => !translationIds.contains(translation.id))
+                .toList();
+            return TranslationGroup(
+              id: group.id,
+              name: group.name,
+              translations: updatedTranslations,
+              isAcquired: group.isAcquired,
+              acquiredDate: group.acquiredDate,
+              description: group.description,
+            );
+          }
+          return group;
+        }).toList();
+
+        return VocabularyEntry(
+          id: entry.id,
+          language: entry.language,
+          countryCode: entry.countryCode,
+          groups: updatedGroups,
+        );
+      }
+      return entry;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+    _saveVocabulary();
+  }
+
+  void toggleQuizInclusion(String languageId, String groupId, String translationId) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == languageId) {
+        final updatedGroups = entry.groups.map((group) {
+          if (group.id == groupId) {
+            final updatedTranslations = group.translations.map((translation) {
+              if (translation.id == translationId) {
+                return Translation(
+                  id: translation.id,
+                  text: translation.text,
+                  translatedText: translation.translatedText,
+                  includeInQuiz: !translation.includeInQuiz,
+                );
+              }
+              return translation;
+            }).toList();
+
+            return TranslationGroup(
+              id: group.id,
+              name: group.name,
+              translations: updatedTranslations,
+              isAcquired: group.isAcquired,
+              acquiredDate: group.acquiredDate,
+              description: group.description,
+            );
+          }
+          return group;
+        }).toList();
+
+        return VocabularyEntry(
+          id: entry.id,
+          language: entry.language,
+          countryCode: entry.countryCode,
+          groups: updatedGroups,
         );
       }
       return entry;

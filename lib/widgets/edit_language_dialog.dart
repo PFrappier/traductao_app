@@ -106,7 +106,7 @@ class _EditLanguageDialogState extends State<EditLanguageDialog> {
               id: widget.entry.id,
               language: _languageController.text.trim(),
               countryCode: _selectedCountry?.code ?? widget.entry.countryCode,
-              translations: widget.entry.translations,
+              groups: widget.entry.groups,
             );
             Navigator.of(context).pop(updatedEntry);
           },

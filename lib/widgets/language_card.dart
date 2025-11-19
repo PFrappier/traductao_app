@@ -192,7 +192,7 @@ class _LanguageCardState extends State<LanguageCard> {
             _showBottomSheet(context);
           },
           onTap: () {
-            router.push('/translations/${widget.entry.language}');
+            router.push('/groups/${widget.entry.id}/${widget.entry.language}');
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
