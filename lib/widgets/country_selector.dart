@@ -88,26 +88,10 @@ class _CountrySelectorState extends State<CountrySelector> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
-        String searchQuery = '';
-        List<Country> filteredCountries = [];
+        final searchController = TextEditingController();
 
         return StatefulBuilder(
           builder: (context, setModalState) {
-            void filterCountries(String query, List<Country> allCountries) {
-              setModalState(() {
-                searchQuery = query;
-                if (query.isEmpty) {
-                  filteredCountries = allCountries;
-                } else {
-                  filteredCountries = allCountries
-                      .where((country) =>
-                          country.name.toLowerCase().contains(query.toLowerCase()) ||
-                          country.code.toLowerCase().contains(query.toLowerCase()))
-                      .toList();
-                }
-              });
-            }
-
             return DraggableScrollableSheet(
               initialChildSize: 0.75,
               minChildSize: 0.5,
@@ -152,6 +136,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                       child: BlocBuilder<CountriesCubit, CountriesState>(
                         builder: (context, state) {
                           return TextField(
+                            controller: searchController,
                             decoration: InputDecoration(
                               hintText: 'Rechercher un pays...',
                               prefixIcon: const Icon(Icons.search),
@@ -160,7 +145,7 @@ class _CountrySelectorState extends State<CountrySelector> {
                               ),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
-                            onChanged: (query) => filterCountries(query, state.countries),
+                            onChanged: (query) => setModalState(() {}),
                           );
                         },
                       ),
@@ -169,11 +154,6 @@ class _CountrySelectorState extends State<CountrySelector> {
                     Expanded(
                       child: BlocBuilder<CountriesCubit, CountriesState>(
                         builder: (context, state) {
-                          // Initialiser les pays filtrés si nécessaire
-                          if (filteredCountries.isEmpty && searchQuery.isEmpty && state.countries.isNotEmpty) {
-                            filteredCountries = state.countries;
-                          }
-
                           if (state.status == CountriesStatus.loading) {
                             return const Center(child: CircularProgressIndicator());
                           }
@@ -198,7 +178,13 @@ class _CountrySelectorState extends State<CountrySelector> {
                             );
                           }
 
-                          final displayCountries = searchQuery.isEmpty ? state.countries : filteredCountries;
+                          final currentQuery = searchController.text;
+                          final displayCountries = currentQuery.isEmpty
+                              ? state.countries
+                              : state.countries.where((country) =>
+                                  country.name.toLowerCase().contains(currentQuery.toLowerCase()) ||
+                                  country.code.toLowerCase().contains(currentQuery.toLowerCase()))
+                                .toList();
 
                           return displayCountries.isEmpty
                               ? Center(
