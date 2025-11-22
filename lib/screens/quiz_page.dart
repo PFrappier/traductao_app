@@ -378,6 +378,7 @@ class _QuizDialogState extends State<QuizDialog> {
   Widget build(BuildContext context) {
     return Dialog.fullscreen(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           title: Text('Quiz - ${widget.language}'),
           centerTitle: true,
