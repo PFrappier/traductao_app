@@ -127,35 +127,36 @@ class _QuizPageState extends State<QuizPage> {
               .toList(),
         ),
         const SizedBox(height: 20),
-        if (_selectedLanguage != null) ...[
-          DropdownMenu<String>(
-            label: const Text("Groupe"),
-            width: double.infinity,
-            errorText: _groupError,
-            onSelected: (String? value) {
-              setState(() {
-                _selectedGroupId = value;
-                _groupError = null;
-              });
-            },
-            dropdownMenuEntries: [
-              const DropdownMenuEntry(
-                value: 'all',
-                label: 'Tous les groupes',
-              ),
-              ...state.vocabularyEntries
-                  .firstWhere((e) => e.id == _selectedLanguageId)
-                  .groups
-                  .map(
-                    (group) => DropdownMenuEntry(
-                      value: group.id,
-                      label: group.name,
-                    ),
+        DropdownMenu<String>(
+          label: const Text("Groupe"),
+          width: double.infinity,
+          enabled: _selectedLanguage != null,
+          errorText: _groupError,
+          onSelected: (String? value) {
+            setState(() {
+              _selectedGroupId = value;
+              _groupError = null;
+            });
+          },
+          dropdownMenuEntries: _selectedLanguage == null
+              ? []
+              : [
+                  const DropdownMenuEntry(
+                    value: 'all',
+                    label: 'Tous les groupes',
                   ),
-            ],
-          ),
-          const SizedBox(height: 20),
-        ],
+                  ...state.vocabularyEntries
+                      .firstWhere((e) => e.id == _selectedLanguageId)
+                      .groups
+                      .map(
+                        (group) => DropdownMenuEntry(
+                          value: group.id,
+                          label: group.name,
+                        ),
+                      ),
+                ],
+        ),
+        const SizedBox(height: 20),
         TextField(
           controller: _numberOfQuestionsController,
           decoration: InputDecoration(

@@ -5,7 +5,7 @@ import 'package:traductao_app/bloc/vocabulary_state.dart';
 import 'package:traductao_app/model/translation_pack.dart';
 import 'package:traductao_app/screens/group_translations_page.dart';
 
-class TranslationGroupsPage extends StatelessWidget {
+class TranslationGroupsPage extends StatefulWidget {
   final String country;
   final String languageId;
 
@@ -15,48 +15,90 @@ class TranslationGroupsPage extends StatelessWidget {
     required this.languageId,
   });
 
+  @override
+  State<TranslationGroupsPage> createState() => _TranslationGroupsPageState();
+}
+
+class _TranslationGroupsPageState extends State<TranslationGroupsPage> {
+  final Set<String> _selectedGroupIds = {};
+
+  void _toggleSelection(String groupId) {
+    setState(() {
+      if (_selectedGroupIds.contains(groupId)) {
+        _selectedGroupIds.remove(groupId);
+      } else {
+        _selectedGroupIds.add(groupId);
+      }
+    });
+  }
+
   void _showAddGroupDialog(BuildContext context) {
     final nameController = TextEditingController();
     final descController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Nouveau groupe'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+          title: Row(
             children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom du groupe',
-                  hintText: 'Ex: Vocabulaire de base',
-                ),
-                autofocus: true,
+              Icon(
+                Icons.create_new_folder_outlined,
+                color: Theme.of(context).colorScheme.secondary,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (optionnel)',
-                  hintText: 'Ex: Mots essentiels pour débuter',
-                ),
-                maxLines: 2,
-              ),
+              const SizedBox(width: 8),
+              const Text('Nouveau groupe'),
             ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom du groupe *',
+                    hintText: 'Ex: Vocabulaire de base',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.folder_outlined),
+                  ),
+                  autofocus: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Veuillez entrer un nom';
+                    }
+                    return null;
+                  },
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: descController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optionnel)',
+                    hintText: 'Ex: Mots essentiels pour débuter',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.description_outlined),
+                  ),
+                  maxLines: 2,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Annuler'),
             ),
-            TextButton(
+            FilledButton(
               onPressed: () {
-                if (nameController.text.trim().isEmpty) return;
+                if (!(formKey.currentState?.validate() ?? false)) return;
 
                 final newGroup = TranslationGroup(
-                  id: '${languageId}_group_${DateTime.now().millisecondsSinceEpoch}',
+                  id: '${widget.languageId}_group_${DateTime.now().millisecondsSinceEpoch}',
                   name: nameController.text.trim(),
                   translations: [],
                   description: descController.text.trim().isEmpty
@@ -64,7 +106,7 @@ class TranslationGroupsPage extends StatelessWidget {
                       : descController.text.trim(),
                 );
 
-                context.read<VocabularyCubit>().addGroup(languageId, newGroup);
+                context.read<VocabularyCubit>().addGroup(widget.languageId, newGroup);
                 Navigator.of(dialogContext).pop();
 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -87,40 +129,65 @@ class TranslationGroupsPage extends StatelessWidget {
   void _showEditGroupDialog(BuildContext context, TranslationGroup group) {
     final nameController = TextEditingController(text: group.name);
     final descController = TextEditingController(text: group.description ?? '');
+    final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Modifier le groupe'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+          title: Row(
             children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom du groupe',
-                ),
-                autofocus: true,
+              Icon(
+                Icons.edit_outlined,
+                color: Theme.of(context).colorScheme.secondary,
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (optionnel)',
-                ),
-                maxLines: 2,
-              ),
+              const SizedBox(width: 8),
+              const Text('Modifier le groupe'),
             ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nom du groupe *',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.folder_outlined),
+                  ),
+                  autofocus: true,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Veuillez entrer un nom';
+                    }
+                    return null;
+                  },
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: descController,
+                  decoration: const InputDecoration(
+                    labelText: 'Description (optionnel)',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.description_outlined),
+                  ),
+                  maxLines: 2,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Annuler'),
             ),
-            TextButton(
+            FilledButton(
               onPressed: () {
-                if (nameController.text.trim().isEmpty) return;
+                if (!(formKey.currentState?.validate() ?? false)) return;
 
                 final updatedGroup = group.copyWith(
                   name: nameController.text.trim(),
@@ -129,7 +196,7 @@ class TranslationGroupsPage extends StatelessWidget {
                       : descController.text.trim(),
                 );
 
-                context.read<VocabularyCubit>().updateGroup(languageId, updatedGroup);
+                context.read<VocabularyCubit>().updateGroup(widget.languageId, updatedGroup);
                 Navigator.of(dialogContext).pop();
 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -149,14 +216,16 @@ class TranslationGroupsPage extends StatelessWidget {
     );
   }
 
-  void _showDeleteGroupDialog(BuildContext context, TranslationGroup group) {
+  void _deleteSelectedGroups(BuildContext context) {
+    if (_selectedGroupIds.isEmpty) return;
+
     showDialog(
       context: context,
-      builder: (dialogContext) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Supprimer le groupe'),
+          title: const Text('Confirmer la suppression'),
           content: Text(
-            'Êtes-vous sûr de vouloir supprimer "${group.name}" et toutes ses traductions (${group.translations.length}) ?',
+            'Êtes-vous sûr de vouloir supprimer ${_selectedGroupIds.length} groupe${_selectedGroupIds.length > 1 ? 's' : ''} et toutes leurs traductions ?',
           ),
           actions: [
             TextButton(
@@ -165,12 +234,19 @@ class TranslationGroupsPage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                context.read<VocabularyCubit>().deleteGroup(languageId, group.id);
+                final count = _selectedGroupIds.length;
                 Navigator.of(dialogContext).pop();
+                context.read<VocabularyCubit>().deleteGroups(
+                  widget.languageId,
+                  _selectedGroupIds.toList(),
+                );
+                setState(() {
+                  _selectedGroupIds.clear();
+                });
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Groupe "${group.name}" supprimé'),
+                    content: Text('$count groupe${count > 1 ? 's supprimés' : ' supprimé'} !'),
                     backgroundColor: Theme.of(context).colorScheme.error,
                     behavior: SnackBarBehavior.floating,
                     duration: const Duration(seconds: 2),
@@ -193,7 +269,7 @@ class TranslationGroupsPage extends StatelessWidget {
     return BlocBuilder<VocabularyCubit, VocabularyState>(
       builder: (context, state) {
         final entry = state.vocabularyEntries.firstWhere(
-          (e) => e.id == languageId,
+          (e) => e.id == widget.languageId,
           orElse: () => state.vocabularyEntries.first,
         );
 
@@ -201,10 +277,32 @@ class TranslationGroupsPage extends StatelessWidget {
         final totalGroups = entry.groups.length;
         final progressPercentage = totalGroups > 0 ? (acquiredGroups / totalGroups * 100).toInt() : 0;
 
+        final bool hasSelection = _selectedGroupIds.isNotEmpty;
+
         return Scaffold(
           appBar: AppBar(
-            title: Text(country),
+            title: Text(hasSelection
+                ? '${_selectedGroupIds.length} sélectionné${_selectedGroupIds.length > 1 ? 's' : ''}'
+                : widget.country),
             centerTitle: true,
+            leading: hasSelection
+                ? IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      setState(() {
+                        _selectedGroupIds.clear();
+                      });
+                    },
+                  )
+                : null,
+            actions: hasSelection
+                ? [
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteSelectedGroups(context),
+                    ),
+                  ]
+                : null,
           ),
           body: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -282,142 +380,139 @@ class TranslationGroupsPage extends StatelessWidget {
                           itemCount: entry.groups.length,
                           itemBuilder: (context, index) {
                             final group = entry.groups[index];
-                            return _buildGroupCard(context, group);
+                            return _buildGroupCard(context, group, hasSelection);
                           },
                         ),
                 ),
               ],
             ),
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () => _showAddGroupDialog(context),
-            tooltip: 'Créer un groupe',
-            child: const Icon(Icons.add),
-          ),
+          floatingActionButton: hasSelection
+              ? null
+              : FloatingActionButton(
+                  onPressed: () => _showAddGroupDialog(context),
+                  tooltip: 'Créer un groupe',
+                  child: const Icon(Icons.add),
+                ),
         );
       },
     );
   }
 
-  Widget _buildGroupCard(BuildContext context, TranslationGroup group) {
+  Widget _buildGroupCard(BuildContext context, TranslationGroup group, bool hasSelection) {
+    final isSelected = _selectedGroupIds.contains(group.id);
+    final showAcquiredStyle = group.isAcquired && !isSelected;
+
     return Opacity(
-      opacity: group.isAcquired ? 0.5 : 1.0,
+      opacity: showAcquiredStyle ? 0.5 : 1.0,
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
         elevation: 1,
+        color: isSelected
+            ? Theme.of(context).colorScheme.secondaryContainer.withValues(alpha: 0.3)
+            : null,
         child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => GroupTranslationsPage(
-                groupName: group.name,
-                languageId: languageId,
-                groupId: group.id,
-              ),
+          onTap: () {
+            if (hasSelection) {
+              _toggleSelection(group.id);
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupTranslationsPage(
+                    groupName: group.name,
+                    languageId: widget.languageId,
+                    groupId: group.id,
+                  ),
+                ),
+              );
+            }
+          },
+          onLongPress: () => _toggleSelection(group.id),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                if (isSelected)
+                  Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Icon(
+                      Icons.check_circle,
+                      size: 28,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  )
+                else
+                  IconButton(
+                    icon: Icon(
+                      group.isAcquired ? Icons.check_circle : Icons.check_circle_outline,
+                      size: 28,
+                    ),
+                    color: group.isAcquired
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    onPressed: () {
+                      context.read<VocabularyCubit>().toggleGroupAcquired(widget.languageId, group.id);
+                    },
+                  ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        group.name,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${group.translations.length} traduction${group.translations.length > 1 ? 's' : ''}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if (group.description != null && group.description!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            group.description!,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      if (showAcquiredStyle && group.acquiredDate != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(
+                            'Acquis le ${_formatDate(group.acquiredDate!)}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (!hasSelection)
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    onPressed: () => _showEditGroupDialog(context, group),
+                  ),
+              ],
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              IconButton(
-                icon: Icon(
-                  group.isAcquired ? Icons.check_circle : Icons.check_circle_outline,
-                  size: 28,
-                ),
-                color: group.isAcquired
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
-                onPressed: () {
-                  context.read<VocabularyCubit>().toggleGroupAcquired(languageId, group.id);
-                },
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      group.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${group.translations.length} traduction${group.translations.length > 1 ? 's' : ''}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    if (group.description != null && group.description!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          group.description!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    if (group.isAcquired && group.acquiredDate != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4.0),
-                        child: Text(
-                          'Acquis le ${_formatDate(group.acquiredDate!)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit, size: 20),
-                        SizedBox(width: 8),
-                        Text('Modifier'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, size: 20),
-                        SizedBox(width: 8),
-                        Text('Supprimer'),
-                      ],
-                    ),
-                  ),
-                ],
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    _showEditGroupDialog(context, group);
-                  } else if (value == 'delete') {
-                    _showDeleteGroupDialog(context, group);
-                  }
-                },
-              ),
-            ],
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';

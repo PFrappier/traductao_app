@@ -219,6 +219,32 @@ class VocabularyCubit extends Cubit<VocabularyState> {
     _saveVocabulary();
   }
 
+  void deleteGroups(String languageId, List<String> groupIds) {
+    final updatedEntries = state.vocabularyEntries.map((entry) {
+      if (entry.id == languageId) {
+        final updatedGroups = entry.groups
+            .where((group) => !groupIds.contains(group.id))
+            .toList();
+
+        return VocabularyEntry(
+          id: entry.id,
+          language: entry.language,
+          countryCode: entry.countryCode,
+          groups: updatedGroups,
+        );
+      }
+      return entry;
+    }).toList();
+
+    emit(
+      state.copyWith(
+        status: VocabularyStatus.success,
+        vocabularyEntries: updatedEntries,
+      ),
+    );
+    _saveVocabulary();
+  }
+
   void toggleGroupAcquired(String languageId, String groupId) {
     final updatedEntries = state.vocabularyEntries.map((entry) {
       if (entry.id == languageId) {
