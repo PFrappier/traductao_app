@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:traductao_app/model/translation.dart';
 import 'package:traductao_app/screens/quiz_page.dart';
+import 'package:traductao_app/screens/quiz_session_page.dart';
 import 'package:traductao_app/screens/vocabulary_page.dart';
 import 'package:traductao_app/screens/translation_groups_page.dart';
 import 'package:traductao_app/widgets/no_animation_page.dart';
@@ -50,6 +52,21 @@ final GoRouter router = GoRouter(
           child: TranslationGroupsPage(
             country: country,
             languageId: languageId,
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      name: 'QuizSession',
+      path: '/quiz/session/:language',
+      parentNavigatorKey: _rootNavigatorKey,
+      pageBuilder: (BuildContext context, GoRouterState state) {
+        final language = state.pathParameters['language']!;
+        final translations = state.extra as List<Translation>;
+        return MaterialPage(
+          child: QuizSessionPage(
+            language: language,
+            translations: translations,
           ),
         );
       },

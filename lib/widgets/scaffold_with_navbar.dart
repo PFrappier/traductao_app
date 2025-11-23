@@ -45,8 +45,16 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncIndexWithLocation();
       _navBarProvider.addListener(_handleIndexChange);
     });
+  }
+
+  void _syncIndexWithLocation() {
+    final index = tabs.indexWhere((tab) => widget.location == tab.initialLocation);
+    if (index != -1 && index != _navBarProvider.currentIndex) {
+      _navBarProvider.setCurrentIndex(index);
+    }
   }
 
   @override
