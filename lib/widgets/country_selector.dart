@@ -128,9 +128,9 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.75,
+      initialChildSize: 0.9,
       minChildSize: 0.5,
-      maxChildSize: 0.9,
+      maxChildSize: 0.95,
       builder: (context, scrollController) => Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,

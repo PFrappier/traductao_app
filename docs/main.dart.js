@@ -93443,7 +93443,7 @@ s===$&&A.a()
 s.K$=$.ad()
 s.H$=0
 this.az()},
-I(a){return new A.Ak(0.75,0.5,0.9,new A.apN(this),null)}}
+I(a){return new A.Ak(0.9,0.5,0.95,new A.apN(this),null)}}
 A.apN.prototype={
 $2(a,b){var s,r,q,p=null,o=A.o(a),n=A.o(a).ax,m=n.rx
 n=A.fO(p,p,B.r,p,p,new A.dm((m==null?n.k3:m).iK(0.4),p,p,A.eL(2),p,p,B.ay),p,4,B.o6,p,p,p,40)
