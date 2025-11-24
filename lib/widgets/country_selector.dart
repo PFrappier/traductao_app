@@ -88,207 +88,234 @@ class _CountrySelectorState extends State<CountrySelector> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
-        final searchController = TextEditingController();
+        return _CountryPickerSheet(
+          selectedCountry: widget.selectedCountry,
+          onCountrySelected: widget.onCountrySelected,
+        );
+      },
+    );
+  }
+}
 
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return DraggableScrollableSheet(
-              initialChildSize: 0.75,
-              minChildSize: 0.5,
-              maxChildSize: 0.9,
-              builder: (context, scrollController) => Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 12, bottom: 8),
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(2),
+class _CountryPickerSheet extends StatefulWidget {
+  final Country? selectedCountry;
+  final Function(Country) onCountrySelected;
+
+  const _CountryPickerSheet({
+    required this.selectedCountry,
+    required this.onCountrySelected,
+  });
+
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.9,
+      builder: (context, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Sélectionner un drapeau',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                      child: Row(
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Rechercher un pays...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onChanged: (query) => setState(() {}),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: BlocBuilder<CountriesCubit, CountriesState>(
+                builder: (context, state) {
+                  if (state.status == CountriesStatus.loading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (state.status == CountriesStatus.error) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
-                            child: Text(
-                              'Sélectionner un drapeau',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.error,
                           ),
-                          IconButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.close),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Erreur de chargement',
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ],
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: BlocBuilder<CountriesCubit, CountriesState>(
-                        builder: (context, state) {
-                          return TextField(
-                            controller: searchController,
-                            decoration: InputDecoration(
-                              hintText: 'Rechercher un pays...',
-                              prefixIcon: const Icon(Icons.search),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            ),
-                            onChanged: (query) => setModalState(() {}),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: BlocBuilder<CountriesCubit, CountriesState>(
-                        builder: (context, state) {
-                          if (state.status == CountriesStatus.loading) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
+                    );
+                  }
 
-                          if (state.status == CountriesStatus.error) {
-                            return Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
+                  final currentQuery = _searchController.text;
+                  final displayCountries = currentQuery.isEmpty
+                      ? state.countries
+                      : state.countries.where((country) =>
+                          country.name.toLowerCase().contains(currentQuery.toLowerCase()) ||
+                          country.code.toLowerCase().contains(currentQuery.toLowerCase()))
+                        .toList();
+
+                  return displayCountries.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 48,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Aucun pays trouvé',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                'Essayez un autre terme de recherche',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: scrollController,
+                          itemCount: displayCountries.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              final isSelected = widget.selectedCountry == null || widget.selectedCountry!.code.isEmpty;
+                              return Column(
                                 children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    size: 48,
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Erreur de chargement',
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          final currentQuery = searchController.text;
-                          final displayCountries = currentQuery.isEmpty
-                              ? state.countries
-                              : state.countries.where((country) =>
-                                  country.name.toLowerCase().contains(currentQuery.toLowerCase()) ||
-                                  country.code.toLowerCase().contains(currentQuery.toLowerCase()))
-                                .toList();
-
-                          return displayCountries.isEmpty
-                              ? Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.search_off,
-                                        size: 48,
+                                  ListTile(
+                                    leading: Container(
+                                      width: 24,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.clear,
+                                        size: 16,
                                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        'Aucun pays trouvé',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Essayez un autre terme de recherche',
-                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                        ),
-                                      ),
-                                    ],
+                                    ),
+                                    title: const Text('Aucun drapeau'),
+                                    trailing: isSelected
+                                        ? Icon(
+                                            Icons.check_circle,
+                                            color: Theme.of(context).colorScheme.secondary,
+                                          )
+                                        : null,
+                                    selected: isSelected,
+                                    onTap: () {
+                                      widget.onCountrySelected(Country(name: '', code: '', flag: ''));
+                                      Navigator.of(context).pop();
+                                    },
                                   ),
-                                )
-                              : ListView.builder(
-                                  controller: scrollController,
-                                  itemCount: displayCountries.length + 1,
-                                  itemBuilder: (context, index) {
-                                    if (index == 0) {
-                                      final isSelected = widget.selectedCountry == null || widget.selectedCountry!.code.isEmpty;
-                                      return Column(
-                                        children: [
-                                          ListTile(
-                                            leading: Container(
-                                              width: 24,
-                                              height: 24,
-                                              decoration: BoxDecoration(
-                                                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                                                borderRadius: BorderRadius.circular(4),
-                                                border: Border.all(
-                                                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
-                                                ),
-                                              ),
-                                              child: Icon(
-                                                Icons.clear,
-                                                size: 16,
-                                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                              ),
-                                            ),
-                                            title: const Text('Aucun drapeau'),
-                                            trailing: isSelected
-                                                ? Icon(
-                                                    Icons.check_circle,
-                                                    color: Theme.of(context).colorScheme.secondary,
-                                                  )
-                                                : null,
-                                            selected: isSelected,
-                                            onTap: () {
-                                              widget.onCountrySelected(Country(name: '', code: '', flag: ''));
-                                              Navigator.of(context).pop();
-                                            },
-                                          ),
-                                          const Divider(height: 1),
-                                        ],
-                                      );
-                                    }
+                                  const Divider(height: 1),
+                                ],
+                              );
+                            }
 
-                                    // Éléments suivants : pays
-                                    final country = displayCountries[index - 1];
-                                    final isSelected = widget.selectedCountry?.code == country.code;
+                            // Éléments suivants : pays
+                            final country = displayCountries[index - 1];
+                            final isSelected = widget.selectedCountry?.code == country.code;
 
-                                    return ListTile(
-                                      leading: Text(
-                                        country.flag,
-                                        style: const TextStyle(fontSize: 24),
-                                      ),
-                                      title: Text(country.name),
-                                      trailing: isSelected
-                                          ? Icon(
-                                              Icons.check_circle,
-                                              color: Theme.of(context).colorScheme.secondary,
-                                            )
-                                          : null,
-                                      selected: isSelected,
-                                      onTap: () {
-                                        widget.onCountrySelected(country);
-                                        Navigator.of(context).pop();
-                                      },
-                                    );
-                                  },
-                                );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+                            return ListTile(
+                              leading: Text(
+                                country.flag,
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                              title: Text(country.name),
+                              trailing: isSelected
+                                  ? Icon(
+                                      Icons.check_circle,
+                                      color: Theme.of(context).colorScheme.secondary,
+                                    )
+                                  : null,
+                              selected: isSelected,
+                              onTap: () {
+                                widget.onCountrySelected(country);
+                                Navigator.of(context).pop();
+                              },
+                            );
+                          },
+                        );
+                },
               ),
-            );
-          },
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
