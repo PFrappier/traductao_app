@@ -23,6 +23,17 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   bool _isCorrect = false;
   int _correctAnswersCount = 0;
   bool _showResults = false;
+  final List<Translation> _failedTranslations = [];
+  late List<Translation> _currentTranslations;
+  late int _totalQuestionsCount;
+  int _totalCorrectAnswers = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTranslations = widget.translations;
+    _totalQuestionsCount = widget.translations.length;
+  }
 
   @override
   void dispose() {
@@ -31,10 +42,10 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
   }
 
   double get _progress =>
-      (_currentQuestionIndex + 1) / widget.translations.length;
+      (_currentQuestionIndex + 1) / _currentTranslations.length;
 
   Translation get _currentTranslation =>
-      widget.translations[_currentQuestionIndex];
+      _currentTranslations[_currentQuestionIndex];
 
   void _validateAnswer() {
     final userAnswer = _answerController.text.trim().toLowerCase();
@@ -45,12 +56,14 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
       _isCorrect = userAnswer == correctAnswer;
       if (_isCorrect) {
         _correctAnswersCount++;
+      } else {
+        _failedTranslations.add(_currentTranslation);
       }
     });
   }
 
   void _nextQuestion() {
-    if (_currentQuestionIndex < widget.translations.length - 1) {
+    if (_currentQuestionIndex < _currentTranslations.length - 1) {
       setState(() {
         _currentQuestionIndex++;
         _answerController.clear();
@@ -64,8 +77,23 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
     }
   }
 
+  void _retryFailedQuestions() {
+    setState(() {
+      _totalCorrectAnswers += _correctAnswersCount;
+      _currentTranslations = List.from(_failedTranslations);
+      _failedTranslations.clear();
+      _currentQuestionIndex = 0;
+      _correctAnswersCount = 0;
+      _showResults = false;
+      _isAnswerValidated = false;
+      _isCorrect = false;
+      _answerController.clear();
+    });
+  }
+
   Widget _buildResultsScreen(BuildContext context) {
-    final percentage = (_correctAnswersCount / widget.translations.length * 100).round();
+    final totalCorrect = _totalCorrectAnswers + _correctAnswersCount;
+    final percentage = (totalCorrect / _totalQuestionsCount * 100).round();
 
     String getMessage() {
       if (percentage == 100) return 'Parfait ! 🎯';
@@ -91,20 +119,39 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
         ),
         const SizedBox(height: 10),
         Text(
-          '$_correctAnswersCount/${widget.translations.length}',
+          '$totalCorrect/$_totalQuestionsCount',
           style: Theme.of(context).textTheme.displayLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.primary,
           ),
         ),
         const Spacer(),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () => context.go('/quiz'),
-            child: const Text('Terminer'),
+        if (_failedTranslations.isNotEmpty) ...[
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _retryFailedQuestions,
+              child: Text(
+                'Recommencer avec les ${_failedTranslations.length} erreur${_failedTranslations.length > 1 ? 's' : ''}',
+              ),
+            ),
           ),
-        ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => context.go('/quiz'),
+              child: const Text('Terminer'),
+            ),
+          ),
+        ] else
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () => context.go('/quiz'),
+              child: const Text('Terminer'),
+            ),
+          ),
       ],
     );
   }
@@ -143,7 +190,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Question ${_currentQuestionIndex + 1}/${widget.translations.length}',
+                    'Question ${_currentQuestionIndex + 1}/${_currentTranslations.length}',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -179,6 +226,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                       labelText: "Ta réponse",
                       border: OutlineInputBorder(),
                     ),
+                    style: Theme.of(context).textTheme.titleLarge,
                     autofocus: true,
                     enabled: !_isAnswerValidated,
                   ),
@@ -230,7 +278,7 @@ class _QuizSessionPageState extends State<QuizSessionPage> {
                       onPressed: _isAnswerValidated ? _nextQuestion : _validateAnswer,
                       child: Text(
                         _isAnswerValidated
-                            ? (_currentQuestionIndex < widget.translations.length - 1
+                            ? (_currentQuestionIndex < _currentTranslations.length - 1
                                 ? 'Question suivante'
                                 : 'Terminer le quiz')
                             : 'Valider',

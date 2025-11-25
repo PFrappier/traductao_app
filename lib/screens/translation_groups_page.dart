@@ -280,6 +280,7 @@ class _TranslationGroupsPageState extends State<TranslationGroupsPage> {
         final bool hasSelection = _selectedGroupIds.isNotEmpty;
 
         return Scaffold(
+          resizeToAvoidBottomInset: false,
           appBar: AppBar(
             title: Text(hasSelection
                 ? '${_selectedGroupIds.length} sélectionné${_selectedGroupIds.length > 1 ? 's' : ''}'

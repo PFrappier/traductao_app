@@ -75,6 +75,7 @@ class _ScaffoldWithNavBarState extends State<ScaffoldWithNavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(child: widget.child),
       bottomNavigationBar: Consumer<NavBarProvider>(
         builder: (context, value, child) {

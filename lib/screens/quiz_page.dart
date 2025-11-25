@@ -35,6 +35,7 @@ class _QuizPageState extends State<QuizPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text('Quiz'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(20.0),

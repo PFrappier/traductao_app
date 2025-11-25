@@ -144,6 +144,7 @@ class _GroupTranslationsPageState extends State<GroupTranslationsPage> {
 
         if (group == null) {
           return Scaffold(
+            resizeToAvoidBottomInset: false,
             appBar: AppBar(
               title: Text(widget.groupName),
             ),
@@ -156,6 +157,7 @@ class _GroupTranslationsPageState extends State<GroupTranslationsPage> {
         final bool hasSelection = _selectedTranslationIds.isNotEmpty;
 
         return Scaffold(
+          resizeToAvoidBottomInset: false,
           appBar: AppBar(
             title: Text(hasSelection ? '${_selectedTranslationIds.length} sélectionné${_selectedTranslationIds.length > 1 ? 's' : ''}' : widget.groupName),
             centerTitle: true,

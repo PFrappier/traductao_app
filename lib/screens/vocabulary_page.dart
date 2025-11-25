@@ -205,6 +205,7 @@ class _MyVocabularyPageState extends State<MyVocabularyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text('Mon vocabulaire'),
         centerTitle: true,
