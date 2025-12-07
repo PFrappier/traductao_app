@@ -159,7 +159,20 @@ class _GroupTranslationsPageState extends State<GroupTranslationsPage> {
         return Scaffold(
           resizeToAvoidBottomInset: false,
           appBar: AppBar(
-            title: Text(hasSelection ? '${_selectedTranslationIds.length} sélectionné${_selectedTranslationIds.length > 1 ? 's' : ''}' : widget.groupName),
+            title: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(hasSelection ? '${_selectedTranslationIds.length} sélectionné${_selectedTranslationIds.length > 1 ? 's' : ''}' : widget.groupName),
+                if (!hasSelection)
+                  Text(
+                    '${group.translations.length} traduction${group.translations.length > 1 ? 's' : ''}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+              ],
+            ),
             centerTitle: true,
             leading: hasSelection
                 ? IconButton(
