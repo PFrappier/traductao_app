@@ -22,15 +22,6 @@ class _QuizPageState extends State<QuizPage> {
   String? _selectedGroupId;
   String? _languageError;
   String? _groupError;
-  String? _numberOfQuestionsError;
-  final TextEditingController _numberOfQuestionsController =
-      TextEditingController();
-
-  @override
-  void dispose() {
-    _numberOfQuestionsController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +89,7 @@ class _QuizPageState extends State<QuizPage> {
         ),
         const SizedBox(height: 10),
         Text(
-          "Lance un quiz en choisissant la langue, le groupe et le nombre de questions auxquelles répondre.",
+          "Lance un quiz en choisissant la langue et le groupe de traductions.",
           style: Theme.of(context).textTheme.bodyLarge!.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
@@ -158,23 +149,6 @@ class _QuizPageState extends State<QuizPage> {
                       ),
                 ],
         ),
-        const SizedBox(height: 20),
-        TextField(
-          controller: _numberOfQuestionsController,
-          decoration: InputDecoration(
-            labelText: "Nombre de questions",
-            border: const OutlineInputBorder(),
-            errorText: _numberOfQuestionsError,
-          ),
-          keyboardType: TextInputType.number,
-          onChanged: (value) {
-            if (_numberOfQuestionsError != null) {
-              setState(() {
-                _numberOfQuestionsError = null;
-              });
-            }
-          },
-        ),
         const Spacer(),
         TextButtonWithIcon(
           text: "Lancer le quiz",
@@ -197,14 +171,6 @@ class _QuizPageState extends State<QuizPage> {
     if (_selectedGroupId == null) {
       setState(() {
         _groupError = 'Veuillez sélectionner un groupe';
-      });
-      return;
-    }
-
-    final numberOfQuestions = int.tryParse(_numberOfQuestionsController.text);
-    if (numberOfQuestions == null || numberOfQuestions <= 0) {
-      setState(() {
-        _numberOfQuestionsError = 'Veuillez entrer un nombre valide';
       });
       return;
     }
@@ -239,24 +205,7 @@ class _QuizPageState extends State<QuizPage> {
       return;
     }
 
-    final quizTranslations = <Translation>[];
-    final random = Random();
-
-    if (numberOfQuestions <= visibleTranslations.length) {
-      final shuffled = visibleTranslations.toList()..shuffle(random);
-      quizTranslations.addAll(shuffled.take(numberOfQuestions));
-    } else {
-      final pool = visibleTranslations.toList();
-
-      while (quizTranslations.length < numberOfQuestions) {
-        final shuffled = pool.toList()..shuffle(random);
-
-        final remaining = numberOfQuestions - quizTranslations.length;
-        quizTranslations.addAll(
-          shuffled.take(remaining > shuffled.length ? shuffled.length : remaining),
-        );
-      }
-    }
+    final quizTranslations = visibleTranslations.toList()..shuffle(Random());
 
     context.push(
       '/quiz/session/${Uri.encodeComponent(_selectedLanguage!)}',
